@@ -1,26 +1,41 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { UpdateMenuDto } from './dto/update-menu.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Menu } from './entities/menu.entity';
+import { Model } from 'mongoose';
+import { CategoryService } from 'src/category/category.service';
 
 @Injectable()
 export class MenuService {
-  create(createMenuDto: CreateMenuDto) {
-    return 'This action adds a new menu';
+  constructor(
+    @InjectModel(Menu.name) private readonly menuModel: Model<Menu>,
+    private readonly categoryService: CategoryService,
+  ) {}
+  async create(createMenuDto: CreateMenuDto): Promise<Menu> {
+    const category = await this.categoryService.findOne(createMenuDto.category);
+    if (!category) throw new NotFoundException('Not Found any Category');
+    const createdMenu = new this.menuModel(createMenuDto);
+    return (await createdMenu.save()).populate('category', 'name');
   }
-
-  findAll() {
-    return `This action returns all menu`;
+  async findAll(): Promise<Menu[]> {
+    return this.menuModel.find().exec();
   }
-
-  findOne(id: number) {
-    return `This action returns a #${id} menu`;
+  async findOne(id: string): Promise<Menu> {
+    const menu = await this.menuModel.findById(id).exec();
+    if (!menu) throw new NotFoundException('Menu not found!');
+    return menu;
   }
-
-  update(id: number, updateMenuDto: UpdateMenuDto) {
-    return `This action updates a #${id} menu`;
+  async update(id: string, updateMenuDto: UpdateMenuDto): Promise<Menu> {
+    const updatedMenu = await this.menuModel
+      .findByIdAndUpdate(id, updateMenuDto, { new: true })
+      .exec();
+    if (!updatedMenu) throw new NotFoundException('Menu not found!');
+    return updatedMenu;
   }
-
-  remove(id: number) {
-    return `This action removes a #${id} menu`;
+  async remove(id: string): Promise<Menu> {
+    const menu = await this.menuModel.findByIdAndDelete(id).exec();
+    if (!menu) throw new NotFoundException('Menu not found!');
+    return menu;
   }
 }
