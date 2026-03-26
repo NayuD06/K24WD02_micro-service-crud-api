@@ -10,6 +10,9 @@ import { Menu } from 'src/menu/entities/menu.entity';
 
 @Injectable()
 export class OrderService {
+  findById(orderId: string) {
+    throw new Error('Method not implemented.');
+  }
   constructor(
     @InjectModel(Order.name) private readonly orderModel: Model<Order>,
     @InjectModel(Menu.name) private readonly menuModel: Model<Menu>,
