@@ -12,11 +12,18 @@ export class MenuService {
     @InjectModel(Menu.name) private readonly menuModel: Model<Menu>,
     private readonly categoryService: CategoryService,
   ) {}
-  async create(createMenuDto: CreateMenuDto): Promise<Menu> {
+  async create(createMenuDto: CreateMenuDto): Promise<Menu | undefined> {
     const category = await this.categoryService.findOne(createMenuDto.category);
     if (!category) throw new NotFoundException('Not Found any Category');
-    const createdMenu = new this.menuModel(createMenuDto);
-    return (await createdMenu.save()).populate('category', 'name');
+    try {
+      const createdMenu = new this.menuModel(createMenuDto);
+      return (await createdMenu.save()).populate('category', 'name');
+    } catch (error) {
+      if (error.code === 11000) {
+        throw new Error('Menu with this name already exists');
+      }
+      throw new Error('Error creating menu');
+    }
   }
   async findAll(): Promise<Menu[]> {
     return this.menuModel.find().exec();

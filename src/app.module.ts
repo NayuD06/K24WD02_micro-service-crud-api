@@ -8,6 +8,7 @@ import { CategoryModule } from './category/category.module';
 import { MenuModule } from './menu/menu.module';
 import { OrderModule } from './order/order.module';
 import { ReviewModule } from './review/review.module';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ReviewModule } from './review/review.module';
     MenuModule,
     OrderModule,
     ReviewModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

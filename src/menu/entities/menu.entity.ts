@@ -10,5 +10,6 @@ export class Menu extends Document {
   price: number;
   @Prop({ type: Types.ObjectId, ref: Category.name })
   category: Types.ObjectId;
+  quantity: number;
 }
 export const MenuSchema = SchemaFactory.createForClass(Menu);

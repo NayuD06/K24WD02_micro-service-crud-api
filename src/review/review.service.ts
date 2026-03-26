@@ -1,26 +1,59 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { MenuService } from 'src/menu/menu.service';
+import { UsersService } from 'src/users/users.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
+import { Review } from './entities/review.entity';
 
 @Injectable()
 export class ReviewService {
-  create(createReviewDto: CreateReviewDto) {
-    return 'This action adds a new review';
+  constructor(
+    @InjectModel(Review.name) private readonly reviewModel: Model<Review>,
+    private readonly usersService: UsersService,
+    private readonly menuService: MenuService,
+  ) {}
+
+  async create(createReviewDto: CreateReviewDto): Promise<Review> {
+    await this.usersService.findOne(createReviewDto.user);
+    await this.menuService.findOne(createReviewDto.item);
+    const createdReview = new this.reviewModel(createReviewDto);
+    return createdReview.save();
   }
 
-  findAll() {
-    return `This action returns all review`;
+  findAll(): Promise<Review[]> {
+    return this.reviewModel
+      .find()
+      .populate('user', 'name')
+      .populate({ path: 'item', select: 'name' })
+      .sort({ createdAt: -1 })
+      .exec();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} review`;
+  async findOne(id: string): Promise<Review | null> {
+    const review = await this.reviewModel
+      .findById(id)
+      .populate('user', 'name')
+      .populate({ path: 'item', select: 'name' })
+      .exec();
+    if (!review) throw new NotFoundException('Review not found!');
+    return review;
   }
 
-  update(id: number, updateReviewDto: UpdateReviewDto) {
-    return `This action updates a #${id} review`;
+  async update(id: string, updateReviewDto: UpdateReviewDto) {
+    const updatedReview = await this.reviewModel
+      .findByIdAndUpdate(id, updateReviewDto, { new: true })
+      .populate('user', 'name')
+      .populate({ path: 'item', select: 'name' })
+      .exec();
+    if (!updatedReview) throw new NotFoundException('Review not found!');
+    return updatedReview;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} review`;
+  async remove(id: string) {
+    const review = await this.reviewModel.findByIdAndDelete(id).exec();
+    if (!review) throw new NotFoundException('Review not found!');
+    return review;
   }
 }
