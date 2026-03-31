@@ -6,7 +6,7 @@ export class CreateMenuDto {
   readonly name: string;
   @IsNumber()
   @Min(0)
-  @Max(100, { message: 'Please input less than $100' })
+  @Max(100000, { message: 'Please input less than $100,000' })
   readonly price: number;
   @IsMongoId()
   readonly category: string;

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Menu UI</title>
+  </head>
+  <body>
+    <div>
+      <a href="./category.html">Category</a>
+      <a href="./menu.html">Menu</a>
+      <a href="./order.html">Order</a>
+      <a href="./user.html">User</a>
+    </div>
+
+    <hr />
+
+    <h1>Create Menu</h1>
+
+    <input id='name' placeholder="Menu name" />
+    <input id="price" placeholder="Price" />
+
+    <select id="category">
+      <option value="">Select category</option>
+    </select>
+
+    <button onclick="createMenu()">Create</button>
+
+    <div id="message"></div>
+
+    <script>
+      const CATEGORY_API = 'http://localhost:9999/category';
+      const MENU_API = 'http://localhost:9999/menu';
+      const $ = (id) => document.getElementById(id);
+      const showMessage = (msg) => ($('message').textContent = msg);
+
+      async function handleResponse(res) {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || 'Request failed');
+        return data;
+      }
+
+      async function loadCategories() {
+        try {
+          const data = await handleResponse(await fetch(CATEGORY_API));
+          $('category').innerHTML =
+            '<option value="">Select category</option>' +
+            data
+              .map((cat) => `<option value="${cat._id}">${cat.name}</option>`)
+              .join('');
+        } catch (err) {
+          showMessage(err.message);
+        }
+      }
+
+      async function createMenu() {
+        const name = $('name').value.trim();
+        const price = parseFloat($('price').value);
+        const categoryId = $('category').value;
+
+        if (!name) {
+          return showMessage('Name is required.');
+        }
+        if (isNaN(price) || price <= 0) {
+          return showMessage('Please enter a valid price.');
+        }
+        if (!categoryId) {
+          return showMessage('Please select a category.');
+        }
+
+        try {
+          const data = await handleResponse(
+            await fetch(MENU_API, {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ name, price: Number(price), category: categoryId }),
+            })
+          );
+          $('name').value = '';
+          $('price').value = '';
+          $('category').value = '';
+          showMessage(`Created menu successfully: "${data.name}"`);
+        } catch (error) {
+          showMessage(error.message);
+        }
+      }
+
+      loadCategories();
+    </script>
+  </body>
+</html>
