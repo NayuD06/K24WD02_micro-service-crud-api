@@ -4,18 +4,12 @@ import { OrderController } from './order.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Order, OrderSchema } from './entities/order.entity';
 import { MenuModule } from 'src/menu/menu.module';
-import { UsersModule } from 'src/users/users.module';
-import { Menu, MenuSchema } from 'src/menu/entities/menu.entity';
-
 
 @Module({
   imports: [
-      MongooseModule.forFeature([{ name: Order.name, schema: OrderSchema },
-        { name: Menu.name, schema: MenuSchema },
-      ]),
-      UsersModule,
-      MenuModule,
-    ],
+    MongooseModule.forFeature([{ name: Order.name, schema: OrderSchema }]),
+    MenuModule,
+  ],
   controllers: [OrderController],
   providers: [OrderService],
 })

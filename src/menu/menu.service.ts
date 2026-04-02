@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { UpdateMenuDto } from './dto/update-menu.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -9,30 +9,37 @@ import { CategoryService } from 'src/category/category.service';
 @Injectable()
 export class MenuService {
   constructor(
-    @InjectModel(Menu.name) private readonly menuModel: Model<Menu>,
+    @InjectModel(Menu.name) private menuModel: Model<Menu>,
     private readonly categoryService: CategoryService,
   ) {}
-  async create(createMenuDto: CreateMenuDto): Promise<Menu | undefined> {
-    const category = await this.categoryService.findOne(createMenuDto.category);
-    if (!category) throw new NotFoundException('Not Found any Category');
+
+  async create(createMenuDto: CreateMenuDto): Promise<Menu> {
+    await this.categoryService.findOne(createMenuDto.category);
+
     try {
       const createdMenu = new this.menuModel(createMenuDto);
-      return (await createdMenu.save()).populate('category', 'name');
-    } catch (error) {
+      const menu = await createdMenu.save();
+      return menu.populate('category', 'name');
+    } catch (error: any) {
       if (error.code === 11000) {
-        throw new Error('Menu with this name already exists');
+        throw new ConflictException(
+          'Menu name must be unique! Value already exists.',
+        );
       }
-      throw new Error('Error creating menu');
+      throw error;
     }
   }
+
   async findAll(): Promise<Menu[]> {
-    return this.menuModel.find().exec();
+    return this.menuModel.find().populate('category', 'name').exec();
   }
+
   async findOne(id: string): Promise<Menu> {
-    const menu = await this.menuModel.findById(id).exec();
+    const menu = await this.menuModel.findById(id).populate('category', 'name').exec();
     if (!menu) throw new NotFoundException('Menu not found!');
     return menu;
   }
+
   async update(id: string, updateMenuDto: UpdateMenuDto): Promise<Menu> {
     const updatedMenu = await this.menuModel
       .findByIdAndUpdate(id, updateMenuDto, { new: true })
@@ -40,6 +47,7 @@ export class MenuService {
     if (!updatedMenu) throw new NotFoundException('Menu not found!');
     return updatedMenu;
   }
+
   async remove(id: string): Promise<Menu> {
     const menu = await this.menuModel.findByIdAndDelete(id).exec();
     if (!menu) throw new NotFoundException('Menu not found!');

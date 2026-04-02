@@ -4,7 +4,7 @@ import { Category } from 'src/category/entities/category.entity';
 
 @Schema({timestamps: true, collection: 'menus'})
 export class Menu extends Document {
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true, sparse: true })
   name: string;
   @Prop()
   price: number;
@@ -13,3 +13,4 @@ export class Menu extends Document {
   quantity: number;
 }
 export const MenuSchema = SchemaFactory.createForClass(Menu);
+MenuSchema.index({ name: 1 }, { unique: true, sparse: true });

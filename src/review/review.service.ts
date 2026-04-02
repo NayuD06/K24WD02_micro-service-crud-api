@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { MenuService } from 'src/menu/menu.service';
-import { UsersService } from 'src/users/users.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { Review } from './entities/review.entity';
@@ -11,14 +10,12 @@ import { Review } from './entities/review.entity';
 export class ReviewService {
   constructor(
     @InjectModel(Review.name) private readonly reviewModel: Model<Review>,
-    private readonly usersService: UsersService,
     private readonly menuService: MenuService,
   ) {}
 
-  async create(createReviewDto: CreateReviewDto): Promise<Review> {
-    await this.usersService.findOne(createReviewDto.user);
+  async create(createReviewDto: CreateReviewDto, userId: string): Promise<Review> {
     await this.menuService.findOne(createReviewDto.item);
-    const createdReview = new this.reviewModel(createReviewDto);
+    const createdReview = new this.reviewModel({ ...createReviewDto, userId });
     return createdReview.save();
   }
 
